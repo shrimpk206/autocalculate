@@ -44,16 +44,16 @@ export function calculateMaterials(
     const tPrice = priceConfig.rcThicknessPrices[rcThickness] ?? 16000;
     const rcItems: [string, number, number][] = [
       [`단열재 (로스율 ${insulationLossRate}%)`, lossMultiplier, tPrice],
-      ["디스크 앙카", 5.3, 400],
-      ["접착 몰탈", 0.05, 35000],
-      ["단열재 부착용 폼본드", 0.1666667, 6500],
-      ["드릴비트", 0.1, 5000],
-      ["Terra Flex 20kg", 0.1666667, 21000],
-      [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, 18000],
-      ["메지 시멘트", 0.2631579, 6500],
-      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"]],
-      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"]],
-      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"]],
+      ["디스크 앙카", 5.3, priceConfig.materialPrices["디스크 앙카"] ?? 400],
+      ["접착 몰탈", 0.05, priceConfig.materialPrices["접착 몰탈"] ?? 35000],
+      ["단열재 부착용 폼본드", 0.1666667, priceConfig.materialPrices["단열재 부착용 폼본드"] ?? 6500],
+      ["드릴비트", 0.1, priceConfig.materialPrices["드릴비트"] ?? 5000],
+      ["Terra Flex 20kg", 0.1666667, priceConfig.materialPrices["Terra Flex 20kg"] ?? 21000],
+      [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, priceConfig.materialPrices["벽돌타일 (로스율 10%)"] ?? 18000],
+      ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
+      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
+      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
+      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000],
     ];
 
     rcItems.forEach(([name, perM2, unitPrice]) => {
@@ -76,20 +76,24 @@ export function calculateMaterials(
     if (systemId === "WOOD") {
       tPrice += 1000;
     }
-    const diskUnit = trackThickness > 160 ? 500 : trackThickness > 120 ? 450 : 400;
+    // Use base disk anchor price and apply thickness multiplier
+    const baseDiskPrice = priceConfig.materialPrices["디스크 앙카"] ?? 400;
+    const diskUnit = trackThickness > 160 ? baseDiskPrice * 1.25 : trackThickness > 120 ? baseDiskPrice * 1.125 : baseDiskPrice;
 
     const trackItems: [string, number, number][] = [
       [`단열재 (로스율 ${insulationLossRate}%)`, lossMultiplier, tPrice],
-      ["알루미늄 트랙", 2.7, 1000],
+      ["알루미늄 트랙", 2.7, priceConfig.materialPrices["알루미늄 트랙"] ?? 1000],
       ["디스크 앙카", 3, diskUnit],
-      systemId === "WOOD" ? ["델타피스", 5, 40] : ["철판피스", 5, 40],
-      ["단열재 부착용 폼본드", 0.1538, 6500],
-      ["Terra Flex 20kg", 0.1666667, 21000],
-      [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, 18000],
-      ["메지 시멘트", 0.2631579, 6500],
-      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"]],
-      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"]],
-      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"]],
+      systemId === "WOOD" 
+        ? ["델타피스", 5, priceConfig.materialPrices["델타피스"] ?? 40] 
+        : ["철판피스", 5, priceConfig.materialPrices["철판피스"] ?? 40],
+      ["단열재 부착용 폼본드", 0.1538, priceConfig.materialPrices["단열재 부착용 폼본드"] ?? 6500],
+      ["Terra Flex 20kg", 0.1666667, priceConfig.materialPrices["Terra Flex 20kg"] ?? 21000],
+      [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, priceConfig.materialPrices["벽돌타일 (로스율 10%)"] ?? 18000],
+      ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
+      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
+      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
+      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000],
     ];
 
     trackItems.forEach(([name, perM2, unitPrice]) => {
@@ -109,6 +113,8 @@ export function calculateMaterials(
 
   if (systemId === "FORM" && formThickness) {
     const formPrice = priceConfig.formThicknessPrices[formThickness] ?? 17600;
+    const releaserPrice = priceConfig.materialPrices["박리제"] ?? 55000;
+    
     items.push({ 
       name: `패턴 거푸집 패널 (${formThickness}T)`, 
       unit: "m²", 
@@ -120,8 +126,8 @@ export function calculateMaterials(
       name: "박리제", 
       unit: "통", 
       qty: Math.ceil(area / 50), 
-      unitPrice: 55000,
-      supply: 55000 * Math.ceil(area / 50)
+      unitPrice: releaserPrice,
+      supply: releaserPrice * Math.ceil(area / 50)
     });
   }
 

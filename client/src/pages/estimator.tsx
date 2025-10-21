@@ -52,7 +52,7 @@ export default function Estimator() {
     );
   }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate]);
 
-  const laborPerM2 = systemId === "FORM" ? 12000 : 0;
+  const laborPerM2 = systemId === "FORM" ? (priceConfig?.laborRates["패턴거푸집 시공비"] ?? 12000) : 0;
   const laborSupply = laborPerM2 * (Number(area) || 0);
   const materialsSupply = materials.reduce((sum, m) => sum + m.supply, 0);
   const subtotal = materialsSupply + laborSupply;

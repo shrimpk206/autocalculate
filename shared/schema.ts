@@ -79,6 +79,7 @@ export const defaultPriceConfiguration: Omit<PriceConfiguration, 'id'> = {
     "단열재 노무비": 23000,
     "타일 노무비": 23000,
     "메지 시공비": 10000,
-    "단열재 노무비(리모델링)": 25000
+    "단열재 노무비(리모델링)": 25000,
+    "패턴거푸집 시공비": 12000
   }
 };
