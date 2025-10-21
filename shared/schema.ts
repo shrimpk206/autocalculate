@@ -33,6 +33,7 @@ export interface CalculationParams {
   formThickness?: number;
   insulationLossRate: number;
   tileLossRate: number;
+  isFireResistant?: boolean; // 준불연 옵션
 }
 
 export interface CalculationResult {
@@ -68,6 +69,10 @@ export const defaultPriceConfiguration: Omit<PriceConfiguration, 'id'> = {
     "단열재 부착용 폼본드": 6500,
     "드릴비트": 5000,
     "디스크 앙카": 400,
+    "디스크 앙카 120mm": 400,
+    "디스크 앙카 150mm": 450,
+    "디스크 앙카 200mm": 500,
+    "디스크 앙카 250mm": 550,
     "알루미늄 트랙": 1000,
     "철판피스": 40,
     "델타피스": 40,

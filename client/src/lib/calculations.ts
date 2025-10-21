@@ -31,20 +31,47 @@ const TRACK_UNIT_MAP: Record<string, string> = {
   "코너타일": "장",
 };
 
+// 단열재 두께에 따른 디스크 앙카 크기 선택 함수
+function getDiskAnchorSize(thickness: number): { size: string; priceKey: string } {
+  if (thickness <= 120) {
+    return { size: "120mm", priceKey: "디스크 앙카 120mm" };
+  } else if (thickness <= 160) {
+    return { size: "150mm", priceKey: "디스크 앙카 150mm" };
+  } else if (thickness <= 200) {
+    return { size: "200mm", priceKey: "디스크 앙카 200mm" };
+  } else {
+    return { size: "250mm", priceKey: "디스크 앙카 250mm" };
+  }
+}
+
+// 수량을 지정된 단위로 올림 처리하는 함수
+function roundUpToUnit(quantity: number, unit: number): number {
+  return Math.ceil(quantity / unit) * unit;
+}
+
 export function calculateMaterials(
   params: CalculationParams,
   priceConfig: PriceConfiguration
 ): MaterialItem[] {
-  const { systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate } = params;
+  const { systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant } = params;
   const items: MaterialItem[] = [];
   const lossMultiplier = 1 + (insulationLossRate / 100);
   const tileLossMultiplier = 1 + (tileLossRate / 100);
 
   if (systemId === "RC" && rcThickness) {
-    const tPrice = priceConfig.rcThicknessPrices[rcThickness] ?? 16000;
+    let tPrice = priceConfig.rcThicknessPrices[rcThickness] ?? 16000;
+    
+    // 준불연 옵션이 활성화된 경우 단열재 가격을 두께당 200원으로 계산
+    if (isFireResistant) {
+      tPrice = rcThickness * 200;
+    }
+    
+    // 단열재 두께에 따른 디스크 앙카 크기 선택
+    const diskAnchor = getDiskAnchorSize(rcThickness);
+    
     const rcItems: [string, number, number][] = [
-      [`단열재 (로스율 ${insulationLossRate}%)`, lossMultiplier, tPrice],
-      ["디스크 앙카", 5.3, priceConfig.materialPrices["디스크 앙카"] ?? 400],
+      [`단열재 (로스율 ${insulationLossRate}%)${isFireResistant ? ' - 준불연' : ''}`, lossMultiplier, tPrice],
+      [`디스크 앙카 ${diskAnchor.size}`, 5.3, priceConfig.materialPrices[diskAnchor.priceKey] ?? 400],
       ["접착 몰탈", 0.05, priceConfig.materialPrices["접착 몰탈"] ?? 35000],
       ["단열재 부착용 폼본드", 0.1666667, priceConfig.materialPrices["단열재 부착용 폼본드"] ?? 6500],
       ["드릴비트", 0.1, priceConfig.materialPrices["드릴비트"] ?? 5000],
@@ -58,9 +85,21 @@ export function calculateMaterials(
 
     rcItems.forEach(([name, perM2, unitPrice]) => {
       let qty = perM2 * area;
+      
+      // 단열재가 아닌 경우 소수점 제거
+      if (!name.includes("단열재")) {
+        qty = Math.ceil(qty);
+      }
+      
+      // 기존 올림 처리 (메지 시멘트, 폼본드, Terra Flex)
       if (name === "메지 시멘트" || name === "단열재 부착용 폼본드" || name === "Terra Flex 20kg") {
         qty = Math.ceil(qty);
       }
+      // 디스크 앙카를 100단위로 올림 처리
+      else if (name.includes("디스크 앙카")) {
+        qty = roundUpToUnit(qty, 100);
+      }
+      
       items.push({ 
         name, 
         unit: RC_UNIT_MAP[name] || "ea", 
@@ -73,17 +112,21 @@ export function calculateMaterials(
 
   if ((systemId === "LGS" || systemId === "WOOD") && trackThickness) {
     let tPrice = priceConfig.trackThicknessPrices[trackThickness] ?? 16000;
-    if (systemId === "WOOD") {
+    
+    // 준불연 옵션이 활성화된 경우 단열재 가격을 두께당 200원으로 계산
+    if (isFireResistant) {
+      tPrice = trackThickness * 200;
+    } else if (systemId === "WOOD") {
       tPrice += 1000;
     }
-    // Use base disk anchor price and apply thickness multiplier
-    const baseDiskPrice = priceConfig.materialPrices["디스크 앙카"] ?? 400;
-    const diskUnit = trackThickness > 160 ? baseDiskPrice * 1.25 : trackThickness > 120 ? baseDiskPrice * 1.125 : baseDiskPrice;
+    
+    // 단열재 두께에 따른 디스크 앙카 크기 선택
+    const diskAnchor = getDiskAnchorSize(trackThickness);
 
     const trackItems: [string, number, number][] = [
-      [`단열재 (로스율 ${insulationLossRate}%)`, lossMultiplier, tPrice],
+      [`단열재 (로스율 ${insulationLossRate}%)${isFireResistant ? ' - 준불연' : ''}`, lossMultiplier, tPrice],
       ["알루미늄 트랙", 2.7, priceConfig.materialPrices["알루미늄 트랙"] ?? 1000],
-      ["디스크 앙카", 3, diskUnit],
+      [`디스크 앙카 ${diskAnchor.size}`, 3, priceConfig.materialPrices[diskAnchor.priceKey] ?? 400],
       systemId === "WOOD" 
         ? ["델타피스", 5, priceConfig.materialPrices["델타피스"] ?? 40] 
         : ["철판피스", 5, priceConfig.materialPrices["철판피스"] ?? 40],
@@ -98,9 +141,25 @@ export function calculateMaterials(
 
     trackItems.forEach(([name, perM2, unitPrice]) => {
       let qty = perM2 * area;
+      
+      // 단열재가 아닌 경우 소수점 제거
+      if (!name.includes("단열재")) {
+        qty = Math.ceil(qty);
+      }
+      
+      // 기존 올림 처리 (메지 시멘트, 폼본드, Terra Flex)
       if (name === "메지 시멘트" || name === "단열재 부착용 폼본드" || name === "Terra Flex 20kg") {
         qty = Math.ceil(qty);
       }
+      // 디스크 앙카와 알루미늄 트랙을 100단위로 올림 처리
+      else if (name.includes("디스크 앙카") || name === "알루미늄 트랙") {
+        qty = roundUpToUnit(qty, 100);
+      }
+      // 철판피스와 델타피스를 500단위로 올림 처리
+      else if (name === "철판피스" || name === "델타피스") {
+        qty = roundUpToUnit(qty, 500);
+      }
+      
       items.push({ 
         name, 
         unit: TRACK_UNIT_MAP[name] || "ea", 

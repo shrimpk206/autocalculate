@@ -31,6 +31,9 @@ export default function Estimator() {
   const [tileLossRate, setTileLossRate] = useState<string>("10");
   const [vatIncluded, setVatIncluded] = useState(false);
   const [roundStep, setRoundStep] = useState<string>("10");
+  const [isFireResistant, setIsFireResistant] = useState(false);
+  const [designFeeEnabled, setDesignFeeEnabled] = useState(false);
+  const [designFeeRate, setDesignFeeRate] = useState<string>("10");
 
   const { data: priceConfig, isLoading } = useQuery<PriceConfiguration>({
     queryKey: ['/api/prices'],
@@ -47,15 +50,20 @@ export default function Estimator() {
         formThickness,
         insulationLossRate: Number(insulationLossRate) || 8,
         tileLossRate: Number(tileLossRate) || 10,
+        isFireResistant,
       },
       priceConfig
     );
-  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate]);
+  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant]);
 
   const laborPerM2 = systemId === "FORM" ? (priceConfig?.laborRates["패턴거푸집 시공비"] ?? 12000) : 0;
   const laborSupply = laborPerM2 * (Number(area) || 0);
-  const materialsSupply = materials.reduce((sum, m) => sum + m.supply, 0);
+  
+  // 설계예가가 적용된 자재 계산
+  const designFeeMultiplier = designFeeEnabled ? (1 + Number(designFeeRate) / 100) : 1;
+  const materialsSupply = materials.reduce((sum, m) => sum + (m.supply * designFeeMultiplier), 0);
   const subtotal = materialsSupply + laborSupply;
+  
   const vat = subtotal * VAT_RATE;
   const total = vatIncluded ? subtotal + vat : subtotal;
   const totalRounded = roundTo(total, Number(roundStep) || 1);
@@ -230,6 +238,18 @@ export default function Estimator() {
                           data-testid="input-tile-loss"
                         />
                       </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="fireResistant"
+                          checked={isFireResistant}
+                          onCheckedChange={setIsFireResistant}
+                          data-testid="switch-fire-resistant"
+                        />
+                        <Label htmlFor="fireResistant" className="text-sm font-medium">
+                          준불연 단열재 (두께당 200원)
+                        </Label>
+                      </div>
                     </>
                   )}
 
@@ -243,6 +263,32 @@ export default function Estimator() {
                       placeholder="10"
                       data-testid="input-round-step"
                     />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="designFee"
+                        checked={designFeeEnabled}
+                        onCheckedChange={setDesignFeeEnabled}
+                        data-testid="switch-design-fee"
+                      />
+                      <Label htmlFor="designFee" className="cursor-pointer">설계예가 적용</Label>
+                    </div>
+                    
+                    {designFeeEnabled && (
+                      <div className="space-y-2">
+                        <Label htmlFor="designFeeRate">설계예가 비율 (%)</Label>
+                        <Input
+                          id="designFeeRate"
+                          type="number"
+                          value={designFeeRate}
+                          onChange={(e) => setDesignFeeRate(e.target.value)}
+                          placeholder="10"
+                          data-testid="input-design-fee-rate"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-end">
@@ -278,20 +324,28 @@ export default function Estimator() {
                       </tr>
                     </thead>
                     <tbody className="font-mono text-sm">
-                      {materials.map((mat, idx) => (
-                        <tr key={idx} className="border-b border-border hover-elevate" data-testid={`row-material-${idx}`}>
-                          <td className="py-3 px-4">{mat.name}</td>
-                          <td className="text-right py-3 px-4">{mat.unit}</td>
-                          <td className="text-right py-3 px-4">{mat.qty.toFixed(2)}</td>
-                          <td className="text-right py-3 px-4">{formatCurrency(mat.unitPrice)}</td>
-                          <td className="text-right py-3 px-4">{formatCurrency(mat.supply)}</td>
-                        </tr>
-                      ))}
+                      {materials.map((mat, idx) => {
+                        const adjustedUnitPrice = mat.unitPrice * designFeeMultiplier;
+                        const adjustedSupply = mat.supply * designFeeMultiplier;
+                        return (
+                          <tr key={idx} className="border-b border-border hover-elevate" data-testid={`row-material-${idx}`}>
+                            <td className="py-3 px-4">{mat.name}</td>
+                            <td className="text-right py-3 px-4">{mat.unit}</td>
+                            <td className="text-right py-3 px-4">
+                              {mat.name.includes("단열재") && !mat.name.includes("부착용") && !mat.name.includes("노무비") 
+                                ? mat.qty.toFixed(1) 
+                                : Math.round(mat.qty).toString()}
+                            </td>
+                            <td className="text-right py-3 px-4">{formatCurrency(adjustedUnitPrice)}</td>
+                            <td className="text-right py-3 px-4">{formatCurrency(adjustedSupply)}</td>
+                          </tr>
+                        );
+                      })}
                       {laborPerM2 > 0 && (
                         <tr className="border-b border-border hover-elevate" data-testid="row-labor">
                           <td className="py-3 px-4">시공 인건비</td>
                           <td className="text-right py-3 px-4">㎡</td>
-                          <td className="text-right py-3 px-4">{Number(area).toFixed(2)}</td>
+                          <td className="text-right py-3 px-4">{Math.round(Number(area)).toString()}</td>
                           <td className="text-right py-3 px-4">{formatCurrency(laborPerM2)}</td>
                           <td className="text-right py-3 px-4">{formatCurrency(laborSupply)}</td>
                         </tr>
@@ -301,8 +355,14 @@ export default function Estimator() {
                 </div>
 
                 <div className="mt-6 space-y-3 border-t border-border pt-4">
-                  <div className="flex justify-between items-center text-lg">
-                    <span className="font-medium">소계</span>
+                  {designFeeEnabled && (
+                    <div className="flex justify-between items-center text-lg">
+                      <span className="font-medium text-blue-700">설계예가 적용 ({designFeeRate}%)</span>
+                      <span className="font-mono text-blue-700">단가 상승 적용</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-lg font-medium pt-2 border-t border-border">
+                    <span>소계</span>
                     <span className="font-mono" data-testid="text-subtotal">{formatCurrency(subtotal)} 원</span>
                   </div>
                   {vatIncluded && (
