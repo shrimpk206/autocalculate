@@ -2,6 +2,7 @@ import type { MaterialItem, CalculationParams, PriceConfiguration } from "@share
 
 const RC_UNIT_MAP: Record<string, string> = {
   "단열재 (로스율 8%)": "㎡",
+  "단열재 (로스율 8%) - 준불연": "㎡",
   "디스크 앙카": "set",
   "접착 몰탈": "통",
   "단열재 부착용 폼본드": "ea",
@@ -17,6 +18,7 @@ const RC_UNIT_MAP: Record<string, string> = {
 
 const TRACK_UNIT_MAP: Record<string, string> = {
   "단열재": "㎡",
+  "단열재 (로스율 8%) - 준불연": "㎡",
   "알루미늄 트랙": "ea",
   "디스크 앙카": "set",
   "철판피스": "ea",
@@ -51,7 +53,8 @@ function roundUpToUnit(quantity: number, unit: number): number {
 
 export function calculateMaterials(
   params: CalculationParams,
-  priceConfig: PriceConfiguration
+  priceConfig: PriceConfiguration,
+  laborIncluded: boolean = true
 ): MaterialItem[] {
   const { systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant } = params;
   const items: MaterialItem[] = [];
@@ -78,10 +81,16 @@ export function calculateMaterials(
       ["Terra Flex 20kg", 0.1666667, priceConfig.materialPrices["Terra Flex 20kg"] ?? 21000],
       [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, priceConfig.materialPrices["벽돌타일 (로스율 10%)"] ?? 18000],
       ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
-      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
-      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
-      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000],
     ];
+
+    // 노무비/시공비 항목 추가 (laborIncluded가 true일 때만)
+    if (laborIncluded) {
+      rcItems.push(
+        ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
+        ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
+        ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000]
+      );
+    }
 
     rcItems.forEach(([name, perM2, unitPrice]) => {
       let qty = perM2 * area;
@@ -100,9 +109,12 @@ export function calculateMaterials(
         qty = roundUpToUnit(qty, 100);
       }
       
+      // 단위 설정: 단열재는 ㎡, 나머지는 매핑에서 찾거나 기본값 사용
+      const unit = name.includes("단열재") ? "㎡" : (RC_UNIT_MAP[name] || "ea");
+      
       items.push({ 
         name, 
-        unit: RC_UNIT_MAP[name] || "ea", 
+        unit, 
         qty, 
         unitPrice,
         supply: unitPrice * qty 
@@ -134,10 +146,16 @@ export function calculateMaterials(
       ["Terra Flex 20kg", 0.1666667, priceConfig.materialPrices["Terra Flex 20kg"] ?? 21000],
       [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, priceConfig.materialPrices["벽돌타일 (로스율 10%)"] ?? 18000],
       ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
-      ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
-      ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
-      ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000],
     ];
+
+    // 노무비/시공비 항목 추가 (laborIncluded가 true일 때만)
+    if (laborIncluded) {
+      trackItems.push(
+        ["단열재 노무비", 1.0, priceConfig.laborRates["단열재 노무비"] ?? 23000],
+        ["타일 노무비", 1.0, priceConfig.laborRates["타일 노무비"] ?? 23000],
+        ["메지 시공비", 1.0, priceConfig.laborRates["메지 시공비"] ?? 10000]
+      );
+    }
 
     trackItems.forEach(([name, perM2, unitPrice]) => {
       let qty = perM2 * area;
@@ -160,9 +178,12 @@ export function calculateMaterials(
         qty = roundUpToUnit(qty, 500);
       }
       
+      // 단위 설정: 단열재는 ㎡, 나머지는 매핑에서 찾거나 기본값 사용
+      const unit = name.includes("단열재") ? "㎡" : (TRACK_UNIT_MAP[name] || "ea");
+      
       items.push({ 
         name, 
-        unit: TRACK_UNIT_MAP[name] || "ea", 
+        unit, 
         qty, 
         unitPrice,
         supply: unitPrice * qty 

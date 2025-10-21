@@ -34,6 +34,7 @@ export default function Estimator() {
   const [isFireResistant, setIsFireResistant] = useState(false);
   const [designFeeEnabled, setDesignFeeEnabled] = useState(false);
   const [designFeeRate, setDesignFeeRate] = useState<string>("10");
+  const [laborIncluded, setLaborIncluded] = useState(true);
 
   const { data: priceConfig, isLoading } = useQuery<PriceConfiguration>({
     queryKey: ['/api/prices'],
@@ -52,12 +53,13 @@ export default function Estimator() {
         tileLossRate: Number(tileLossRate) || 10,
         isFireResistant,
       },
-      priceConfig
+      priceConfig,
+      laborIncluded
     );
-  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant]);
+  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant, laborIncluded]);
 
   const laborPerM2 = systemId === "FORM" ? (priceConfig?.laborRates["패턴거푸집 시공비"] ?? 12000) : 0;
-  const laborSupply = laborPerM2 * (Number(area) || 0);
+  const laborSupply = laborIncluded ? (laborPerM2 * (Number(area) || 0)) : 0;
   
   // 설계예가가 적용된 자재 계산
   const designFeeMultiplier = designFeeEnabled ? (1 + Number(designFeeRate) / 100) : 1;
@@ -67,6 +69,9 @@ export default function Estimator() {
   const vat = subtotal * VAT_RATE;
   const total = vatIncluded ? subtotal + vat : subtotal;
   const totalRounded = roundTo(total, Number(roundStep) || 1);
+  
+  // 공제 금액 계산 (버림으로 인한 차액)
+  const discountAmount = total - totalRounded;
 
   const onPrint = () => window.print();
 
@@ -254,7 +259,7 @@ export default function Estimator() {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="roundStep">반올림 단위 (원)</Label>
+                    <Label htmlFor="roundStep">버림 단위 (원)</Label>
                     <Input
                       id="roundStep"
                       type="number"
@@ -291,7 +296,17 @@ export default function Estimator() {
                     )}
                   </div>
 
-                  <div className="flex items-end">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="labor"
+                        checked={laborIncluded}
+                        onCheckedChange={setLaborIncluded}
+                        data-testid="switch-labor"
+                      />
+                      <Label htmlFor="labor" className="cursor-pointer">시공비 포함</Label>
+                    </div>
+                    
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="vat"
@@ -341,13 +356,22 @@ export default function Estimator() {
                           </tr>
                         );
                       })}
-                      {laborPerM2 > 0 && (
+                      {laborPerM2 > 0 && laborIncluded && (
                         <tr className="border-b border-border hover-elevate" data-testid="row-labor">
                           <td className="py-3 px-4">시공 인건비</td>
                           <td className="text-right py-3 px-4">㎡</td>
                           <td className="text-right py-3 px-4">{Math.round(Number(area)).toString()}</td>
                           <td className="text-right py-3 px-4">{formatCurrency(laborPerM2)}</td>
                           <td className="text-right py-3 px-4">{formatCurrency(laborSupply)}</td>
+                        </tr>
+                      )}
+                      {discountAmount > 0 && (
+                        <tr className="border-b border-border hover-elevate bg-red-50" data-testid="row-discount">
+                          <td className="py-3 px-4 font-medium text-red-700">공제 (버림 단위 적용)</td>
+                          <td className="text-right py-3 px-4">원</td>
+                          <td className="text-right py-3 px-4">1</td>
+                          <td className="text-right py-3 px-4">{formatCurrency(discountAmount)}</td>
+                          <td className="text-right py-3 px-4 font-medium text-red-700">-{formatCurrency(discountAmount)}</td>
                         </tr>
                       )}
                     </tbody>
@@ -371,8 +395,18 @@ export default function Estimator() {
                       <span className="font-mono" data-testid="text-vat">{formatCurrency(vat)} 원</span>
                     </div>
                   )}
+                  <div className="flex justify-between items-center text-lg font-medium pt-2 border-t border-border">
+                    <span>계산 총액</span>
+                    <span className="font-mono" data-testid="text-total-before">{formatCurrency(total)} 원</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-lg">
+                      <span className="font-medium text-red-700">공제 (버림 단위 적용)</span>
+                      <span className="font-mono text-red-700" data-testid="text-discount">-{formatCurrency(discountAmount)} 원</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-xl font-semibold pt-3 border-t border-border">
-                    <span>총액</span>
+                    <span>최종 총액</span>
                     <span className="font-mono text-primary" data-testid="text-total">{formatCurrency(totalRounded)} 원</span>
                   </div>
                 </div>
