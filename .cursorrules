@@ -1,0 +1,120 @@
+# Cursor AI Rules for 미트하임 자동견적 프로그램
+
+## 프로젝트 개요
+건축 자재 견적 자동 계산 시스템 (React + Express + TypeScript)
+
+## 핵심 규칙
+
+### 1. 가격 설정 시스템
+- **절대 규칙**: 모든 가격은 `priceConfig`에서 가져와야 함
+- 하드코딩된 가격 사용 금지
+- Fallback 값만 허용:
+  ```typescript
+  const price = priceConfig.materialPrices["자재명"] ?? 기본값;
+  ```
+
+### 2. 파일 구조
+- `shared/schema.ts`: 타입 정의 및 기본 설정
+- `client/src/lib/calculations.ts`: 계산 로직 (핵심)
+- `client/src/pages/estimator.tsx`: 견적 페이지
+- `client/src/pages/settings.tsx`: 가격 관리 페이지
+- `server/routes.ts`: API 엔드포인트
+- `server/storage.ts`: 데이터 저장
+
+### 3. 계산 로직 수정
+`calculations.ts`의 `calculateMaterials()` 함수 수정 시:
+- 각 시스템별 계산식 확인 (RC, LGS, WOOD, FORM)
+- 수량 계산 공식 유지
+- 모든 단가는 `priceConfig`에서 조회
+- 올림 처리 품목: 메지시멘트, 폼본드, Terra Flex
+
+### 4. 코딩 스타일
+```typescript
+// ✅ 좋은 예시
+const terraFlexPrice = priceConfig.materialPrices["Terra Flex 20kg"] ?? 20000;
+const quantity = Math.ceil(area * 0.1666667);
+
+// ❌ 나쁜 예시
+const terraFlexPrice = 20000; // 하드코딩
+const quantity = area * 0.17; // 부정확한 공식
+```
+
+### 5. React Query 사용
+- 데이터 패칭: `useQuery`
+- 데이터 수정: `useMutation` + `apiRequest`
+- 캐시 무효화: `queryClient.invalidateQueries(['/api/prices'])`
+
+### 6. UI 컴포넌트
+- Shadcn UI 컴포넌트 사용 (`@/components/ui/*`)
+- Tailwind CSS로 스타일링
+- 모든 인터랙티브 요소에 `data-testid` 추가
+
+### 7. 타입 안정성
+- TypeScript strict mode 준수
+- `shared/schema.ts`의 타입 재사용
+- `PriceConfiguration`, `CalculatedMaterial` 타입 사용
+
+### 8. 금지 사항
+- ❌ `package.json` 직접 수정
+- ❌ `vite.config.ts` 수정
+- ❌ `drizzle.config.ts` 수정
+- ❌ 계산 로직에 하드코딩된 가격
+- ❌ React 명시적 import (JSX 자동 변환)
+
+### 9. 새 기능 추가 시
+1. `shared/schema.ts`에 타입 정의
+2. `server/storage.ts`에 storage 인터페이스 추가
+3. `server/routes.ts`에 API 엔드포인트 추가
+4. `client/src/pages/`에 페이지 컴포넌트 추가
+5. `client/src/App.tsx`에 라우트 등록
+
+### 10. 디버깅 우선순위
+1. 계산 오류 → `calculations.ts` 확인
+2. 가격 미반영 → `priceConfig` 조회 확인
+3. API 오류 → Network 탭 확인
+4. UI 오류 → React DevTools 확인
+
+## 시스템별 계산 공식
+
+### RC (철근콘크리트)
+```typescript
+디스크 앙카: 5.3개/㎡
+접착 몰탈: 0.05통/㎡
+폼본드: 0.1666667개/㎡
+드릴비트: 0.1개/㎡
+Terra Flex: 0.1666667포/㎡
+메지 시멘트: 0.2631579포/㎡
+```
+
+### LGS/WOOD (경량철골조/목조)
+```typescript
+알루미늄 트랙: 2.7개/㎡
+디스크 앙카: 3세트/㎡
+  - 기본가: materialPrices["디스크 앙카"]
+  - >120mm: 기본가 × 1.125
+  - >160mm: 기본가 × 1.25
+철판피스/델타피스: 5개/㎡
+폼본드: 0.1538개/㎡
+Terra Flex: 0.1666667포/㎡
+메지 시멘트: 0.2631579포/㎡
+```
+
+### FORM (패턴거푸집)
+```typescript
+패턴 거푸집 패널: 면적 × 두께별단가
+박리제: 50㎡당 1통
+시공비: laborRates["패턴거푸집 시공비"]
+```
+
+## 코드 리뷰 체크리스트
+- [ ] 모든 가격이 `priceConfig`에서 조회되는가?
+- [ ] 타입 정의가 올바른가?
+- [ ] React Query 캐시 무효화가 되는가?
+- [ ] `data-testid`가 추가되었는가?
+- [ ] 계산 공식이 정확한가?
+- [ ] 에러 처리가 되어있는가?
+
+## 참고 문서
+- `README.md`: 전체 프로젝트 가이드
+- `replit.md`: 프로젝트 히스토리 및 상태
+- `design_guidelines.md`: UI/UX 가이드라인

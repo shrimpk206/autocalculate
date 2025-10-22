@@ -1,0 +1,9 @@
+{
+  "name": "autocalculate-static",
+  "version": "2.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "npx http-server client -c-1"
+  }
+}

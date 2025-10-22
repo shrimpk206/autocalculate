@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>미트하임 자동견적 프로그램</title>
+    <meta name="description" content="건축 자재의 견적을 자동으로 계산하고 PDF로 출력할 수 있는 전문가용 견적 시스템" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page" id="page">
+      <header class="app-header no-print">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">∑</div>
+          <div>
+            <h1>미트하임 자동견적 프로그램</h1>
+            <p>건축 자재 자동 계산 &amp; PDF 출력</p>
+          </div>
+        </div>
+        <nav class="header-actions">
+          <button type="button" class="btn" data-action="show-estimator">견적 계산</button>
+          <button type="button" class="btn" data-action="show-settings">가격표 관리</button>
+          <button type="button" class="btn" data-action="show-material-rates">물량률 관리</button>
+          <button type="button" class="btn btn-primary" data-action="print">인쇄 / PDF 저장</button>
+        </nav>
+      </header>
+
+      <main>
+        <section id="estimator-view" class="view active">
+          <!-- 견적서 헤더 -->
+          <div class="quote-header no-print">
+            <h2 class="section-title">자재 견적 계산</h2>
+          </div>
+          
+          <!-- 인쇄용 견적서 헤더 -->
+          <div class="quote-document print-only">
+            <div class="quote-title">견적서</div>
+            
+            <div class="quote-info">
+              <div class="quote-date">
+                <span>서기: <span id="quote-date"></span></span>
+              </div>
+              <div class="quote-recipient">
+                <div id="quote-recipient">견적받는처</div>
+                <div id="quote-phone">대표전화: </div>
+              </div>
+            </div>
+            
+            <div class="company-info">
+              <div class="company-details">
+                <div>사업번호 140-81-75263</div>
+                <div>상호 (주)미트하임</div>
+                <div>전화번호 043-753-7234</div>
+                <div>대표자 강태우</div>
+                <div>주소 충북 진천군 덕산면 신척 1길 96-60</div>
+              </div>
+              <div class="company-stamp">
+                <div class="stamp">인</div>
+              </div>
+            </div>
+            
+            <div class="quote-intro">아래와 같이 견적 합니다.</div>
+          </div>
+          <div class="card no-print">
+            <h3 class="card-title">기본 정보</h3>
+            <div class="card-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label for="system">시스템</label>
+                  <select id="system" name="system">
+                    <option value="rc">RC (철근콘크리트)</option>
+                    <option value="lgs">LGS (경량철골조)</option>
+                    <option value="wood">WOOD (목조)</option>
+                    <option value="form">FORM (패턴거푸집)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="area">면적 (m²)</label>
+                  <input id="area" type="number" min="0" step="0.1" value="120" />
+                </div>
+                <div class="field" id="rc-thickness-field">
+                  <label for="rcThickness">두께 (mm)</label>
+                  <select id="rcThickness"></select>
+                </div>
+                <div class="field" id="track-thickness-field">
+                  <label for="trackThickness">두께 (mm)</label>
+                  <select id="trackThickness"></select>
+                </div>
+                <div class="field" id="form-thickness-field">
+                  <label for="formThickness">두께 (mm)</label>
+                  <select id="formThickness"></select>
+                </div>
+                <div class="field" id="insulation-loss-field">
+                  <label for="insulationLoss">단열재 로스율 (%)</label>
+                  <input id="insulationLoss" type="number" min="0" step="1" value="8" />
+                </div>
+                <div class="field" id="tile-loss-field">
+                  <label for="tileLoss">타일 로스율 (%)</label>
+                  <input id="tileLoss" type="number" min="0" step="1" value="10" />
+                </div>
+                <div class="field checkbox-field" id="fire-resistant-field">
+                  <input id="fireResistant" type="checkbox" />
+                  <label for="fireResistant">준불연 단열재 (두께당 200원)</label>
+                </div>
+                <div class="field">
+                  <label for="roundStep">버림 단위 (원)</label>
+                  <input id="roundStep" type="number" min="1" step="1" value="10" />
+                </div>
+                <div class="field" id="corner-tile-type-field">
+                  <label for="cornerTileType">코너타일 타입</label>
+                  <select id="cornerTileType">
+                    <option value="">선택 없음</option>
+                    <option value="longbrick">롱브릭 (m당 16장)</option>
+                    <option value="brickco">브릭코 (m당 14장)</option>
+                  </select>
+                </div>
+                <div class="field" id="corner-tile-length-field">
+                  <label for="cornerTileLength">코너타일 길이 (m)</label>
+                  <input id="cornerTileLength" type="number" min="0" step="0.1" value="" />
+                </div>
+                <div class="field checkbox-field">
+                  <input id="designFee" type="checkbox" />
+                  <label for="designFee">설계예가 적용</label>
+                </div>
+                <div class="field" id="design-fee-rate-field">
+                  <label for="designFeeRate">설계예가 비율 (%)</label>
+                  <input id="designFeeRate" type="number" min="0" step="1" value="10" />
+                </div>
+                <div class="field checkbox-field">
+                  <input id="laborIncluded" type="checkbox" checked />
+                  <label for="laborIncluded">시공비 포함</label>
+                </div>
+                <div class="field checkbox-field">
+                  <input id="vatIncluded" type="checkbox" />
+                  <label for="vatIncluded">부가세 포함</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card no-print">
+            <h3 class="card-title">자재 내역</h3>
+            <div class="card-body">
+              <div class="table-wrapper">
+                <table class="materials-table" aria-describedby="totals">
+                  <thead>
+                    <tr>
+                      <th scope="col">품명</th>
+                      <th scope="col" class="text-right">단위</th>
+                      <th scope="col" class="text-right">수량</th>
+                      <th scope="col" class="text-right">단가 (원)</th>
+                      <th scope="col" class="text-right">공급가 (원)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="materials-body"></tbody>
+                </table>
+              </div>
+              <dl class="totals" id="totals">
+                <div>
+                  <dt>소계</dt>
+                  <dd id="subtotal">0 원</dd>
+                </div>
+                <div id="vat-row">
+                  <dt>부가세 (10%)</dt>
+                  <dd id="vat">0 원</dd>
+                </div>
+                <div>
+                  <dt>계산 총액</dt>
+                  <dd id="total-before">0 원</dd>
+                </div>
+                <div id="discount-row">
+                  <dt>공제 (버림 단위 적용)</dt>
+                  <dd id="discount">0 원</dd>
+                </div>
+                <div class="grand-total">
+                  <dt>최종 총액</dt>
+                  <dd id="total">0 원</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <!-- 인쇄용 견적서 테이블 -->
+          <div class="quote-table print-only">
+            <div class="quote-summary">
+              <div class="total-amount">
+                합계금액 : <span id="total-amount-korean"></span> (<span id="total-amount-number"></span>)
+              </div>
+              <div class="vat-included">부가세포함</div>
+            </div>
+            
+            <table class="quote-materials-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>품명</th>
+                  <th>규격</th>
+                  <th>단위</th>
+                  <th>수량</th>
+                  <th>단가</th>
+                  <th>금액</th>
+                </tr>
+              </thead>
+              <tbody id="quote-materials-body"></tbody>
+            </table>
+            
+            <div class="quote-footer">
+              <div class="quote-details">
+                <div class="product-info">제품형식:비드법심재준불연, 표면타공. 4면 끼움 [철콘후부착]</div>
+                <div class="delivery-info">
+                  <span>납품일자: <input type="text" class="delivery-input" /></span>
+                </div>
+                <div class="payment-info">결제조건: 주문시 50%, 상차시 50%결제, 운송비별도</div>
+                <div class="delivery-location">
+                  <span>납품장소: <input type="text" class="delivery-input" /></span>
+                </div>
+                <div class="account-info">입금계좌: 기업은행 118-154793-01-015 (주)미트하임</div>
+              </div>
+              
+              <div class="quote-totals">
+                <div class="total-breakdown">
+                  <div>공급가 : <span id="quote-subtotal"></span></div>
+                  <div>부가세 : <span id="quote-vat"></span></div>
+                  <div>합계금액 : <span id="quote-total"></span></div>
+                </div>
+                <div class="page-info">Page: 1 / 1</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="settings-view" class="view">
+          <h2 class="section-title">가격표 관리</h2>
+          <div class="card">
+            <h3 class="card-title">가격 설정</h3>
+            <div class="card-body">
+              <div class="settings-tabs" role="tablist" aria-label="가격표 카테고리">
+                <button type="button" data-tab="rc" class="tab active">RC 두께별 단가</button>
+                <button type="button" data-tab="track" class="tab">트랙식 두께별 단가</button>
+                <button type="button" data-tab="form" class="tab">패턴거푸집 두께별 단가</button>
+                <button type="button" data-tab="materials" class="tab">부자재 가격</button>
+                <button type="button" data-tab="labor" class="tab">인건비</button>
+              </div>
+
+              <div id="settings-panels">
+                <div class="settings-panel" data-panel="rc"></div>
+                <div class="settings-panel" data-panel="track" hidden></div>
+                <div class="settings-panel" data-panel="form" hidden></div>
+                <div class="settings-panel" data-panel="materials" hidden></div>
+                <div class="settings-panel" data-panel="labor" hidden></div>
+              </div>
+
+              <div class="settings-actions">
+                <button type="button" class="btn" data-action="reset">기본값으로 초기화</button>
+                <button type="button" class="btn btn-primary" data-action="save">저장</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="material-rates-view" class="view">
+          <h2 class="section-title">물량률 관리</h2>
+          <div class="card">
+            <h3 class="card-title">자재별 물량률 설정</h3>
+            <div class="card-body">
+              <div class="material-rates-tabs" role="tablist" aria-label="시스템별 물량률">
+                <button type="button" data-tab="rc" class="tab active">RC 시스템</button>
+                <button type="button" data-tab="lgs" class="tab">LGS 시스템</button>
+                <button type="button" data-tab="wood" class="tab">WOOD 시스템</button>
+                <button type="button" data-tab="form" class="tab">FORM 시스템</button>
+              </div>
+
+              <div id="material-rates-panels">
+                <div class="material-rates-panel" data-panel="rc"></div>
+                <div class="material-rates-panel" data-panel="lgs" hidden></div>
+                <div class="material-rates-panel" data-panel="wood" hidden></div>
+                <div class="material-rates-panel" data-panel="form" hidden></div>
+              </div>
+
+              <div class="settings-actions">
+                <button type="button" class="btn" data-action="reset-rates">기본값으로 초기화</button>
+                <button type="button" class="btn btn-primary" data-action="save-rates">저장</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,608 @@
+:root {
+  color-scheme: light;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  --color-bg: #f5f6fa;
+  --color-card: #ffffff;
+  --color-border: #d8dee6;
+  --color-text: #1f2937;
+  --color-muted: #6b7280;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-danger: #dc2626;
+  --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--color-card);
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #60a5fa, #2563eb);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.brand p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn:hover,
+.btn:focus {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--color-primary-hover);
+}
+
+main {
+  display: grid;
+  gap: 32px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.section-title {
+  margin: 0 0 16px;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.card {
+  background: var(--color-card);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.card-title {
+  margin: 0;
+  padding: 20px 24px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 20px 24px 28px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+
+.field label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border 0.15s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  background: #fff;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.checkbox-field input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.materials-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.materials-table th,
+.materials-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.materials-table th {
+  background: rgba(15, 23, 42, 0.04);
+  font-weight: 600;
+}
+
+.materials-table td.text-right,
+.materials-table th.text-right {
+  text-align: right;
+}
+
+.materials-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.materials-table .danger {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.totals {
+  margin-top: 24px;
+  display: grid;
+  gap: 12px;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+}
+
+.totals div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totals dt {
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.totals dd {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.totals .grand-total {
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.totals .grand-total dd {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.settings-tabs .tab {
+  flex: 1 1 180px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-tabs .tab.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.settings-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.thickness-list,
+.price-list {
+  display: grid;
+  gap: 12px;
+}
+
+.thickness-item,
+.price-item {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.thickness-item input,
+.price-item input {
+  margin: 0;
+}
+
+.thickness-item button,
+.price-item button {
+  justify-self: end;
+}
+
+.add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.settings-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.material-rates-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.material-rates-tabs .tab {
+  flex: 1 1 180px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.material-rates-tabs .tab.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.material-rates-list {
+  display: grid;
+  gap: 16px;
+}
+
+.material-rate-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.material-rate-item label {
+  font-weight: 500;
+  margin: 0;
+}
+
+.material-rate-item input {
+  width: 120px;
+  margin: 0;
+}
+
+.unit-label {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+  }
+
+  .materials-table {
+    min-width: 100%;
+  }
+
+  .checkbox-field {
+    margin-top: 0;
+  }
+}
+
+/* 인쇄용 견적서 스타일 */
+.print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff;
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .page {
+    padding: 0;
+    max-width: none;
+  }
+
+  .card {
+    box-shadow: none;
+    border-radius: 0;
+    margin-bottom: 16px;
+  }
+
+  .card-title,
+  .section-title {
+    padding-left: 0;
+  }
+
+  /* 견적서 헤더 */
+  .quote-document {
+    margin-bottom: 20px;
+  }
+
+  .quote-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .quote-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .quote-date {
+    font-size: 14px;
+  }
+
+  .quote-recipient {
+    text-align: right;
+  }
+
+  .quote-recipient div {
+    margin-bottom: 5px;
+  }
+
+  .company-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .company-details {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .company-details div {
+    margin-bottom: 2px;
+  }
+
+  .company-stamp {
+    text-align: center;
+  }
+
+  .stamp {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 auto;
+  }
+
+  .quote-intro {
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  /* 견적서 요약 */
+  .quote-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #000;
+  }
+
+  .total-amount {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .vat-included {
+    font-size: 14px;
+  }
+
+  /* 견적서 테이블 */
+  .quote-materials-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .quote-materials-table th,
+  .quote-materials-table td {
+    border: 1px solid #000;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 11px;
+  }
+
+  .quote-materials-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+
+  .quote-materials-table td:first-child {
+    text-align: center;
+  }
+
+  .quote-materials-table td:nth-child(2),
+  .quote-materials-table td:nth-child(3) {
+    text-align: left;
+  }
+
+  .quote-materials-table td:nth-child(4),
+  .quote-materials-table td:nth-child(5),
+  .quote-materials-table td:nth-child(6),
+  .quote-materials-table td:nth-child(7) {
+    text-align: right;
+  }
+
+  /* 견적서 푸터 */
+  .quote-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .quote-details {
+    flex: 1;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .quote-details div {
+    margin-bottom: 5px;
+  }
+
+  .delivery-input {
+    border: none;
+    border-bottom: 1px solid #000;
+    background: transparent;
+    width: 150px;
+    font-size: 11px;
+  }
+
+  .quote-totals {
+    text-align: right;
+    font-size: 12px;
+  }
+
+  .total-breakdown div {
+    margin-bottom: 5px;
+  }
+
+  .page-info {
+    margin-top: 20px;
+    font-size: 10px;
+  }
+}
