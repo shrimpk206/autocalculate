@@ -35,6 +35,8 @@ export default function Estimator() {
   const [designFeeEnabled, setDesignFeeEnabled] = useState(false);
   const [designFeeRate, setDesignFeeRate] = useState<string>("10");
   const [laborIncluded, setLaborIncluded] = useState(true);
+  const [cornerTileType, setCornerTileType] = useState<"longbrick" | "brickco" | "">("");
+  const [cornerTileLength, setCornerTileLength] = useState<string>("");
 
   const { data: priceConfig, isLoading } = useQuery<PriceConfiguration>({
     queryKey: ['/api/prices'],
@@ -52,11 +54,13 @@ export default function Estimator() {
         insulationLossRate: Number(insulationLossRate) || 8,
         tileLossRate: Number(tileLossRate) || 10,
         isFireResistant,
+        cornerTileType: cornerTileType || undefined,
+        cornerTileLength: Number(cornerTileLength) || undefined,
       },
       priceConfig,
       laborIncluded
     );
-  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant, laborIncluded]);
+  }, [priceConfig, systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant, cornerTileType, cornerTileLength, laborIncluded]);
 
   const laborPerM2 = systemId === "FORM" ? (priceConfig?.laborRates["패턴거푸집 시공비"] ?? 12000) : 0;
   const laborSupply = laborIncluded ? (laborPerM2 * (Number(area) || 0)) : 0;
@@ -125,7 +129,7 @@ export default function Estimator() {
       </header>
 
       <div className="print:hidden">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
           <div className="space-y-6">
             {/* System Selection */}
             <Card>
@@ -157,9 +161,9 @@ export default function Estimator() {
                 <CardTitle>입력 값</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="area">면적 (m²)</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="area" className="text-sm">면적 (m²)</Label>
                     <Input
                       id="area"
                       type="number"
@@ -167,12 +171,13 @@ export default function Estimator() {
                       onChange={(e) => setArea(e.target.value)}
                       placeholder="120"
                       data-testid="input-area"
+                      className="h-9 w-full max-w-32"
                     />
                   </div>
 
                   {(systemId === "RC" || systemId === "LGS" || systemId === "WOOD") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="thickness">두께 (mm)</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="thickness" className="text-sm">두께 (mm)</Label>
                       <Select
                         value={systemId === "RC" ? String(rcThickness) : String(trackThickness)}
                         onValueChange={(v) => {
@@ -183,7 +188,7 @@ export default function Estimator() {
                           }
                         }}
                       >
-                        <SelectTrigger id="thickness" data-testid="select-thickness">
+                        <SelectTrigger id="thickness" data-testid="select-thickness" className="h-9 w-full max-w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -198,13 +203,13 @@ export default function Estimator() {
                   )}
 
                   {systemId === "FORM" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="formThickness">두께 (mm)</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="formThickness" className="text-sm">두께 (mm)</Label>
                       <Select
                         value={String(formThickness)}
                         onValueChange={(v) => setFormThickness(Number(v))}
                       >
-                        <SelectTrigger id="formThickness" data-testid="select-form-thickness">
+                        <SelectTrigger id="formThickness" data-testid="select-form-thickness" className="h-9 w-full max-w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -220,8 +225,8 @@ export default function Estimator() {
 
                   {(systemId === "RC" || systemId === "LGS" || systemId === "WOOD") && (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="insulationLoss">단열재 로스율 (%)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="insulationLoss" className="text-sm">단열재 로스율 (%)</Label>
                         <Input
                           id="insulationLoss"
                           type="number"
@@ -229,11 +234,12 @@ export default function Estimator() {
                           onChange={(e) => setInsulationLossRate(e.target.value)}
                           placeholder="8"
                           data-testid="input-insulation-loss"
+                          className="h-9 w-full max-w-24"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="tileLoss">타일 로스율 (%)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="tileLoss" className="text-sm">타일 로스율 (%)</Label>
                         <Input
                           id="tileLoss"
                           type="number"
@@ -241,6 +247,7 @@ export default function Estimator() {
                           onChange={(e) => setTileLossRate(e.target.value)}
                           placeholder="10"
                           data-testid="input-tile-loss"
+                          className="h-9 w-full max-w-24"
                         />
                       </div>
 
@@ -251,15 +258,15 @@ export default function Estimator() {
                           onCheckedChange={setIsFireResistant}
                           data-testid="switch-fire-resistant"
                         />
-                        <Label htmlFor="fireResistant" className="text-sm font-medium">
+                        <Label htmlFor="fireResistant" className="text-xs font-medium">
                           준불연 단열재 (두께당 200원)
                         </Label>
                       </div>
                     </>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="roundStep">버림 단위 (원)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="roundStep" className="text-sm">버림 단위 (원)</Label>
                     <Input
                       id="roundStep"
                       type="number"
@@ -267,10 +274,47 @@ export default function Estimator() {
                       onChange={(e) => setRoundStep(e.target.value)}
                       placeholder="10"
                       data-testid="input-round-step"
+                      className="h-9 w-full max-w-24"
                     />
                   </div>
 
-                  <div className="space-y-4">
+                  {/* 코너타일 입력 필드 */}
+                  {(systemId === "RC" || systemId === "LGS" || systemId === "WOOD") && (
+                    <>
+                      <div className="space-y-1">
+                        <Label htmlFor="cornerTileType" className="text-sm">코너타일 타입</Label>
+                        <Select
+                          value={cornerTileType}
+                          onValueChange={(v) => setCornerTileType(v as "longbrick" | "brickco" | "")}
+                        >
+                          <SelectTrigger id="cornerTileType" data-testid="select-corner-tile-type" className="h-9 w-full max-w-40">
+                            <SelectValue placeholder="코너타일 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="longbrick">롱브릭 (m당 16장)</SelectItem>
+                            <SelectItem value="brickco">브릭코 (m당 14장)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {cornerTileType && (
+                        <div className="space-y-1">
+                          <Label htmlFor="cornerTileLength" className="text-sm">코너타일 길이 (m)</Label>
+                          <Input
+                            id="cornerTileLength"
+                            type="number"
+                            value={cornerTileLength}
+                            onChange={(e) => setCornerTileLength(e.target.value)}
+                            placeholder="0"
+                            data-testid="input-corner-tile-length"
+                            className="h-9 w-full max-w-24"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="designFee"
@@ -278,12 +322,12 @@ export default function Estimator() {
                         onCheckedChange={setDesignFeeEnabled}
                         data-testid="switch-design-fee"
                       />
-                      <Label htmlFor="designFee" className="cursor-pointer">설계예가 적용</Label>
+                      <Label htmlFor="designFee" className="cursor-pointer text-sm">설계예가 적용</Label>
                     </div>
                     
                     {designFeeEnabled && (
-                      <div className="space-y-2">
-                        <Label htmlFor="designFeeRate">설계예가 비율 (%)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="designFeeRate" className="text-sm">설계예가 비율 (%)</Label>
                         <Input
                           id="designFeeRate"
                           type="number"
@@ -291,12 +335,13 @@ export default function Estimator() {
                           onChange={(e) => setDesignFeeRate(e.target.value)}
                           placeholder="10"
                           data-testid="input-design-fee-rate"
+                          className="h-9 w-full max-w-24"
                         />
                       </div>
                     )}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="labor"
@@ -304,7 +349,7 @@ export default function Estimator() {
                         onCheckedChange={setLaborIncluded}
                         data-testid="switch-labor"
                       />
-                      <Label htmlFor="labor" className="cursor-pointer">시공비 포함</Label>
+                      <Label htmlFor="labor" className="cursor-pointer text-sm">시공비 포함</Label>
                     </div>
                     
                     <div className="flex items-center space-x-2">
@@ -314,7 +359,7 @@ export default function Estimator() {
                         onCheckedChange={setVatIncluded}
                         data-testid="switch-vat"
                       />
-                      <Label htmlFor="vat" className="cursor-pointer">부가세 포함</Label>
+                      <Label htmlFor="vat" className="cursor-pointer text-sm">부가세 포함</Label>
                     </div>
                   </div>
                 </div>
@@ -435,6 +480,9 @@ export default function Estimator() {
               {systemId === "RC" && <p><strong>두께:</strong> {rcThickness}mm</p>}
               {(systemId === "LGS" || systemId === "WOOD") && <p><strong>두께:</strong> {trackThickness}mm</p>}
               {systemId === "FORM" && <p><strong>두께:</strong> {formThickness}mm</p>}
+              {cornerTileType && cornerTileLength && (
+                <p><strong>코너타일:</strong> {cornerTileType === 'longbrick' ? '롱브릭' : '브릭코'} {cornerTileLength}m</p>
+              )}
               <p><strong>부가세:</strong> {vatIncluded ? "포함" : "별도"}</p>
             </div>
           </div>

@@ -34,6 +34,8 @@ export interface CalculationParams {
   insulationLossRate: number;
   tileLossRate: number;
   isFireResistant?: boolean; // 준불연 옵션
+  cornerTileType?: 'longbrick' | 'brickco'; // 코너타일 타입
+  cornerTileLength?: number; // 코너타일 길이 (m)
 }
 
 export interface CalculationResult {
@@ -77,7 +79,8 @@ export const defaultPriceConfiguration: Omit<PriceConfiguration, 'id'> = {
     "철판피스": 40,
     "델타피스": 40,
     "벽돌타일 (로스율 10%)": 18000,
-    "코너타일": 1200,
+    "롱브릭 코너타일": 1200,
+    "브릭코 코너타일": 1200,
     "박리제": 55000
   },
   laborRates: {

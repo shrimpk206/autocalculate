@@ -13,7 +13,8 @@ const RC_UNIT_MAP: Record<string, string> = {
   "단열재 노무비": "㎡",
   "타일 노무비": "㎡",
   "메지 시공비": "㎡",
-  "코너타일": "장",
+  "롱브릭 코너타일": "장",
+  "브릭코 코너타일": "장",
 };
 
 const TRACK_UNIT_MAP: Record<string, string> = {
@@ -30,7 +31,8 @@ const TRACK_UNIT_MAP: Record<string, string> = {
   "단열재 노무비": "㎡",
   "타일 노무비": "㎡",
   "메지 시공비": "㎡",
-  "코너타일": "장",
+  "롱브릭 코너타일": "장",
+  "브릭코 코너타일": "장",
 };
 
 // 단열재 두께에 따른 디스크 앙카 크기 선택 함수
@@ -56,7 +58,7 @@ export function calculateMaterials(
   priceConfig: PriceConfiguration,
   laborIncluded: boolean = true
 ): MaterialItem[] {
-  const { systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant } = params;
+  const { systemId, area, rcThickness, trackThickness, formThickness, insulationLossRate, tileLossRate, isFireResistant, cornerTileType, cornerTileLength } = params;
   const items: MaterialItem[] = [];
   const lossMultiplier = 1 + (insulationLossRate / 100);
   const tileLossMultiplier = 1 + (tileLossRate / 100);
@@ -80,8 +82,36 @@ export function calculateMaterials(
       ["드릴비트", 0.1, priceConfig.materialPrices["드릴비트"] ?? 5000],
       ["Terra Flex 20kg", 0.1666667, priceConfig.materialPrices["Terra Flex 20kg"] ?? 21000],
       [`벽돌타일 (로스율 ${tileLossRate}%)`, tileLossMultiplier, priceConfig.materialPrices["벽돌타일 (로스율 10%)"] ?? 18000],
-      ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
     ];
+
+    // 코너타일 계산 추가 (벽돌타일 바로 아래) - 면적과 무관하게 길이만으로 계산
+    if (cornerTileType && cornerTileLength && Number(cornerTileLength) > 0) {
+      const cornerTileName = cornerTileType === 'longbrick' ? '롱브릭 코너타일' : '브릭코 코너타일';
+      const cornerTilePerM = cornerTileType === 'longbrick' ? 16 : 14; // m당 장수
+      const cornerTilePrice = priceConfig.materialPrices[cornerTileName] ?? 1200;
+      const cornerTileLengthNum = Number(cornerTileLength);
+      const cornerTileQuantity = cornerTilePerM * cornerTileLengthNum; // 면적과 무관하게 길이만으로 계산
+      
+      console.log('코너타일 계산 (RC):', {
+        cornerTileType,
+        cornerTileLength,
+        cornerTileLengthNum,
+        cornerTilePerM,
+        cornerTileQuantity,
+        area: area, // 면적 확인용
+        calculation: `${cornerTilePerM} * ${cornerTileLengthNum} = ${cornerTileQuantity} (면적: ${area}㎡와 무관)`
+      });
+      
+      // 코너타일은 면적과 무관하게 독립적으로 추가
+      rcItems.push([
+        cornerTileName,
+        cornerTileQuantity, // 면적 곱하지 않음
+        cornerTilePrice
+      ]);
+    }
+
+    // 메지 시멘트는 코너타일 다음에 추가
+    rcItems.push(["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500]);
 
     // 노무비/시공비 항목 추가 (laborIncluded가 true일 때만)
     if (laborIncluded) {
@@ -93,7 +123,14 @@ export function calculateMaterials(
     }
 
     rcItems.forEach(([name, perM2, unitPrice]) => {
-      let qty = perM2 * area;
+      let qty;
+      
+      // 코너타일은 면적과 무관하게 독립적으로 계산
+      if (name.includes("코너타일")) {
+        qty = perM2; // 이미 계산된 수량 사용
+      } else {
+        qty = perM2 * area; // 다른 자재들은 면적 곱하기
+      }
       
       // 단열재가 아닌 경우 소수점 제거
       if (!name.includes("단열재")) {
@@ -148,6 +185,35 @@ export function calculateMaterials(
       ["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500],
     ];
 
+    // 코너타일 계산 추가 (벽돌타일 바로 아래)
+    if (cornerTileType && cornerTileLength && Number(cornerTileLength) > 0) {
+      const cornerTileName = cornerTileType === 'longbrick' ? '롱브릭 코너타일' : '브릭코 코너타일';
+      const cornerTilePerM = cornerTileType === 'longbrick' ? 16 : 14; // m당 장수
+      const cornerTilePrice = priceConfig.materialPrices[cornerTileName] ?? 1200;
+      const cornerTileLengthNum = Number(cornerTileLength);
+      const cornerTileQuantity = cornerTilePerM * cornerTileLengthNum;
+      
+      console.log('코너타일 계산 (LGS/WOOD):', {
+        cornerTileType,
+        cornerTileLength,
+        cornerTileLengthNum,
+        cornerTilePerM,
+        cornerTileQuantity,
+        area: area, // 면적 확인용
+        calculation: `${cornerTilePerM} * ${cornerTileLengthNum} = ${cornerTileQuantity} (면적: ${area}㎡와 무관)`
+      });
+      
+      // 코너타일은 면적과 무관하게 독립적으로 추가
+      trackItems.push([
+        cornerTileName,
+        cornerTileQuantity, // 면적 곱하지 않음
+        cornerTilePrice
+      ]);
+    }
+
+    // 메지 시멘트는 코너타일 다음에 추가
+    trackItems.push(["메지 시멘트", 0.2631579, priceConfig.materialPrices["메지 시멘트"] ?? 6500]);
+
     // 노무비/시공비 항목 추가 (laborIncluded가 true일 때만)
     if (laborIncluded) {
       trackItems.push(
@@ -158,7 +224,14 @@ export function calculateMaterials(
     }
 
     trackItems.forEach(([name, perM2, unitPrice]) => {
-      let qty = perM2 * area;
+      let qty;
+      
+      // 코너타일은 면적과 무관하게 독립적으로 계산
+      if (name.includes("코너타일")) {
+        qty = perM2; // 이미 계산된 수량 사용
+      } else {
+        qty = perM2 * area; // 다른 자재들은 면적 곱하기
+      }
       
       // 단열재가 아닌 경우 소수점 제거
       if (!name.includes("단열재")) {
@@ -194,7 +267,10 @@ export function calculateMaterials(
   if (systemId === "FORM" && formThickness) {
     const formPrice = priceConfig.formThicknessPrices[formThickness] ?? 17600;
     const releaserPrice = priceConfig.materialPrices["박리제"] ?? 55000;
+    const formbondPrice = priceConfig.materialPrices["단열재 부착용 폼본드"] ?? 6500;
+    const anchorPrice = priceConfig.materialPrices["디스크 앙카"] ?? 400;
     
+    // 패턴 거푸집 패널
     items.push({ 
       name: `패턴 거푸집 패널 (${formThickness}T)`, 
       unit: "m²", 
@@ -202,12 +278,32 @@ export function calculateMaterials(
       unitPrice: formPrice,
       supply: formPrice * area 
     });
+    
+    // 박리제: 30㎡당 1통 (올림)
     items.push({ 
       name: "박리제", 
       unit: "통", 
-      qty: Math.ceil(area / 50), 
+      qty: Math.ceil(area / 30), 
       unitPrice: releaserPrice,
-      supply: releaserPrice * Math.ceil(area / 50)
+      supply: releaserPrice * Math.ceil(area / 30)
+    });
+    
+    // 폼본드: 30㎡당 1개 (올림)
+    items.push({ 
+      name: "단열재 부착용 폼본드", 
+      unit: "ea", 
+      qty: Math.ceil(area / 30), 
+      unitPrice: formbondPrice,
+      supply: formbondPrice * Math.ceil(area / 30)
+    });
+    
+    // 앙카: ㎡당 0.81개 (올림)
+    items.push({ 
+      name: "디스크 앙카", 
+      unit: "ea", 
+      qty: Math.ceil(area * 0.81), 
+      unitPrice: anchorPrice,
+      supply: anchorPrice * Math.ceil(area * 0.81)
     });
   }
 
